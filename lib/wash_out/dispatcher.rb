@@ -28,7 +28,7 @@ module WashOut
       end
 
       unless references.empty?
-        @_params = WashOut::Dispatcher.deep_replace_href(@_params, replaces)
+        @_params = WashOut::Dispatcher.deep_replace_href(@_params, references)
       end
     end
 
