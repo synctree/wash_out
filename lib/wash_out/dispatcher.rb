@@ -52,27 +52,29 @@ module WashOut
       action_spec = self.class.soap_actions[soap_action]
 
       xml_data = @_params.values_at(:envelope, :Envelope).compact.first
-      xml_data = xml_data.values_at(:body, :Body).compact.first
-      xml_data = xml_data.values_at(soap_action.underscore.to_sym,
-                                    soap_action.to_sym).compact.first || {}
+      if xml_data
+        xml_data = xml_data.values_at(:body, :Body).compact.first
+        xml_data = xml_data.values_at(soap_action.underscore.to_sym,
+                                      soap_action.to_sym).compact.first || {}
 
-      strip_empty_nodes = lambda{|hash|
-        hash.keys.each do |key|
-          if hash[key].is_a? Hash
-            value = hash[key].delete_if{|key, value| key.to_s[0] == '@'}
+        strip_empty_nodes = lambda{|hash|
+          hash.keys.each do |key|
+            if hash[key].is_a? Hash
+              value = hash[key].delete_if{|key, value| key.to_s[0] == '@'}
 
-            if value.length > 0
-              hash[key] = strip_empty_nodes.call(value)
-            else
-              hash[key] = nil
+              if value.length > 0
+                hash[key] = strip_empty_nodes.call(value)
+              else
+                hash[key] = nil
+              end
             end
           end
-        end
 
-        hash
-      }
-      xml_data = strip_empty_nodes.call(xml_data)
-      @_params = _load_params(action_spec[:in], xml_data)
+          hash
+        }
+        xml_data = strip_empty_nodes.call(xml_data)
+        @_params = _load_params(action_spec[:in], xml_data)
+      end
     end
 
     # Creates the final parameter hash based on the request spec and xml_data from the request
