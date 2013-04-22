@@ -18,18 +18,20 @@ module WashOut
         :convert_tags_to => ( WashOut::Engine.snakecase_input ? lambda { |tag| tag.snakecase.to_sym } \
                                 : lambda { |tag| tag.to_sym } ))
 
-      @_params = parser.parse(request.body.read)
+      soap_params = parser.parse(request.body.read)
 
       references= {}
-      WashOut::Dispatcher.deep_values(@_params) do |v| 
+      WashOut::Dispatcher.deep_values(soap_params) do |v| 
         if v.is_a?(Hash) && v.has_key?(:@id)
           references['#'+v[:@id]] = v
         end
       end
 
       unless references.empty?
-        @_params = WashOut::Dispatcher.deep_replace_href(@_params, references)
+        soap_params = WashOut::Dispatcher.deep_replace_href(@_params, references)
       end
+
+      @_params.merge!(soap_params)
     end
 
     def _authenticate_wsse
