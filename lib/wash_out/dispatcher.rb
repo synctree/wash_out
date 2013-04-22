@@ -28,10 +28,10 @@ module WashOut
       end
 
       unless references.empty?
-        soap_params = WashOut::Dispatcher.deep_replace_href(@_params, references)
+        soap_params = WashOut::Dispatcher.deep_replace_href(soap_params, references)
       end
 
-      @_params.merge!(soap_params)
+      @_params = params.merge(soap_params)
     end
 
     def _authenticate_wsse
