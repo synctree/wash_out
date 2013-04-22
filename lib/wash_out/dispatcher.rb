@@ -19,10 +19,15 @@ module WashOut
                                 : lambda { |tag| tag.to_sym } ))
 
       @_params = parser.parse(request.body.read)
-      references = WashOut::Dispatcher.deep_select(@_params){|k,v| v.is_a?(Hash) && v.has_key?(:@id)}
 
-      unless references.blank?
-        replaces = {}; references.each{|r| replaces['#'+r[:@id]] = r}
+      references= {}
+      WashOut::Dispatcher.deep_values(@_params) do |v| 
+        if v.is_a?(Hash) && v.has_key?(:@id)
+          references['#'+v[:@id]] = v
+        end
+      end
+
+      unless references.empty?
         @_params = WashOut::Dispatcher.deep_replace_href(@_params, replaces)
       end
     end
@@ -173,14 +178,16 @@ module WashOut
       controller.send :before_filter, :_map_soap_parameters,   :except => [ :_generate_wsdl, :_invalid_action ]
     end
 
-    def self.deep_select(hash, result=[], &blk)
-      result += Hash[hash.select(&blk)].values
+    def self.deep_values(object, &blk)
+      yield(object)
 
-      hash.each do |key, value|
-        result = deep_select(value, result, &blk) if value.is_a? Hash
+      if object.kind_of?(Hash)
+        deep_values(object.values, &blk)
+      elsif object.kind_of?(Array)
+        object.each do |v|
+          deep_values(v, &blk)
+        end
       end
-
-      result
     end
 
     def self.deep_replace_href(hash, replace)
